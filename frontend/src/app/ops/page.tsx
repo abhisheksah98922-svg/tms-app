@@ -3,7 +3,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { Wrench, Fuel, Plus, ShieldCheck } from "lucide-react";
+import { Wrench, Fuel, Plus, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function OpsPage() {
   const { data: fuelEntries } = useQuery({
@@ -59,17 +59,25 @@ export default function OpsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-mono text-xs">
-                {fuelEntries?.map((f: any) => (
-                  <tr key={f.id} className="hover:bg-slate-800/30">
-                    <td className="py-3 px-4 text-slate-400">{f.entry_date}</td>
-                    <td className="py-3 px-4 font-bold text-white font-sans">{f.vehicle_reg_no}</td>
-                    <td className="py-3 px-4 font-sans text-slate-300">{f.driver_name}</td>
-                    <td className="py-3 px-4 text-sky-400">{f.liters} L</td>
-                    <td className="py-3 px-4 text-slate-300">₹{f.rate_per_liter}</td>
-                    <td className="py-3 px-4 font-bold text-emerald-400">₹{f.total_cost.toLocaleString("en-IN")}</td>
-                    <td className="py-3 px-4 text-slate-400">{f.odometer_km.toLocaleString()} km</td>
+                {!fuelEntries || fuelEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-400 font-sans">
+                      No fuel consumption logs recorded yet.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  fuelEntries.map((f: any) => (
+                    <tr key={f.id} className="hover:bg-slate-800/30">
+                      <td className="py-3 px-4 text-slate-400">{f.entry_date}</td>
+                      <td className="py-3 px-4 font-bold text-white font-sans">{f.vehicle_reg_no}</td>
+                      <td className="py-3 px-4 font-sans text-slate-300">{f.driver_name}</td>
+                      <td className="py-3 px-4 text-sky-400">{f.liters} L</td>
+                      <td className="py-3 px-4 text-slate-300">₹{f.rate_per_liter}</td>
+                      <td className="py-3 px-4 font-bold text-emerald-400">₹{f.total_cost.toLocaleString("en-IN")}</td>
+                      <td className="py-3 px-4 text-slate-400">{f.odometer_km.toLocaleString()} km</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -93,14 +101,22 @@ export default function OpsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-xs">
-                {maintenance?.map((m: any) => (
-                  <tr key={m.id} className="hover:bg-slate-800/30">
-                    <td className="py-3 px-4 font-mono text-slate-400">{m.maintenance_date}</td>
-                    <td className="py-3 px-4 font-bold text-white font-mono">{m.vehicle_reg_no}</td>
-                    <td className="py-3 px-4 text-slate-300">{m.description}</td>
-                    <td className="py-3 px-4 text-right font-bold text-amber-400">₹{m.cost.toLocaleString("en-IN")}</td>
+                {!maintenance || maintenance.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400 font-sans">
+                      No vehicle maintenance records logged yet.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  maintenance.map((m: any) => (
+                    <tr key={m.id} className="hover:bg-slate-800/30">
+                      <td className="py-3 px-4 font-mono text-slate-400">{m.maintenance_date}</td>
+                      <td className="py-3 px-4 font-bold text-white font-mono">{m.vehicle_reg_no}</td>
+                      <td className="py-3 px-4 text-slate-300">{m.description}</td>
+                      <td className="py-3 px-4 text-right font-bold text-amber-400">₹{m.cost.toLocaleString("en-IN")}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

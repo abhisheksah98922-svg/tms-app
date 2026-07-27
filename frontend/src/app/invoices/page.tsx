@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { Receipt, Plus, DollarSign, Printer, CheckCircle2, X, Building2, Truck, Scale, Calendar } from "lucide-react";
+import { Receipt, Plus, DollarSign, Printer, CheckCircle2, X, Building2, Truck, Scale, Calendar, Sparkles } from "lucide-react";
 
 export default function InvoicesPage() {
   const queryClient = useQueryClient();
@@ -64,6 +65,13 @@ export default function InvoicesPage() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">GST Invoices & Payment Ledger</h1>
             <p className="text-slate-400 text-sm mt-1">FY-sequential GST compliant billing (HSN 996511), vehicle registration link, cargo weight (Tons), loading date, and state tax splits</p>
           </div>
+          <Link
+            href="/billing"
+            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Custom Bill</span>
+          </Link>
         </div>
 
         {/* Invoices Table */}
@@ -89,8 +97,25 @@ export default function InvoicesPage() {
                   <tr>
                     <td colSpan={10} className="py-8 text-center text-slate-400">Loading invoices...</td>
                   </tr>
+                ) : !invoices || invoices.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <Receipt className="h-10 w-10 text-slate-600" />
+                        <p className="text-slate-300 font-semibold text-base">No GST Invoices issued yet</p>
+                        <p className="text-slate-500 text-xs max-w-sm">Use the Custom Billing Studio to generate physical transport slips or GST invoices!</p>
+                        <Link
+                          href="/billing"
+                          className="mt-2 px-4 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold hover:bg-indigo-600/30 transition-all flex items-center space-x-2"
+                        >
+                          <Sparkles className="h-4 w-4 text-indigo-400" />
+                          <span>Open Custom Billing Studio</span>
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
-                  invoices?.map((inv: any) => (
+                  invoices.map((inv: any) => (
                     <tr key={inv.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-indigo-400">{inv.invoice_no}</td>
                       <td className="py-3.5 px-4 font-mono font-bold text-emerald-400 text-xs">
@@ -105,7 +130,7 @@ export default function InvoicesPage() {
                           <span>{inv.weight_tons || 12.5} Tons</span>
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-200">{inv.customer_name || "Reliance Retail Ltd"}</td>
+                      <td className="py-3.5 px-4 font-medium text-slate-200">{inv.customer_name || "Commercial Client"}</td>
                       <td className="py-3.5 px-4 font-medium text-slate-200">₹{inv.taxable_value.toLocaleString("en-IN")}</td>
                       <td className="py-3.5 px-4 text-xs font-mono text-slate-400">
                         {inv.igst_amount > 0 ? (
@@ -185,7 +210,7 @@ export default function InvoicesPage() {
                 <div className="grid grid-cols-2 gap-4 text-xs">
                   <div>
                     <span className="font-bold text-slate-400 uppercase">Billed To Customer:</span>
-                    <p className="font-semibold text-white mt-1">{selectedInvoice.customer_name || "Reliance Retail Ltd"}</p>
+                    <p className="font-semibold text-white mt-1">{selectedInvoice.customer_name || "Commercial Client"}</p>
                     <p className="text-slate-400">GSTIN Verified</p>
                   </div>
                   <div className="text-right">
