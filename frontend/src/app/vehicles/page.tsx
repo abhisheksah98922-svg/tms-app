@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { Truck, Plus, ShieldAlert, Calendar, CheckCircle2, X } from "lucide-react";
+import { Truck, Plus, ShieldAlert, Calendar, CheckCircle2, X, Sparkles } from "lucide-react";
 
 export default function VehiclesPage() {
   const queryClient = useQueryClient();
@@ -40,6 +40,17 @@ export default function VehiclesPage() {
     },
   });
 
+  const handleQuickAddSample = () => {
+    createVehicleMutation.mutate({
+      reg_no: "MH-04-JK-9821",
+      vehicle_type: "Container 32ft MX",
+      capacity_tons: 15.0,
+      status: "AVAILABLE",
+      fitness_expiry: "2027-03-31",
+      insurance_expiry: "2027-03-31",
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createVehicleMutation.mutate({
@@ -62,13 +73,22 @@ export default function VehiclesPage() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">Fleet Vehicle Roster</h1>
             <p className="text-slate-400 text-sm mt-1">Vehicle status tracking, payload capacities, and document compliance</p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add New Vehicle</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleQuickAddSample}
+              className="flex items-center space-x-2 px-3.5 py-2.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 font-medium rounded-xl text-sm transition-all"
+            >
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span>Quick Add 1 Sample Vehicle</span>
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add New Vehicle</span>
+            </button>
+          </div>
         </div>
 
         {/* Vehicles Table */}
@@ -90,8 +110,25 @@ export default function VehiclesPage() {
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-slate-400">Loading fleet vehicles...</td>
                   </tr>
+                ) : !vehicles || vehicles.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <Truck className="h-10 w-10 text-slate-600" />
+                        <p className="text-slate-300 font-semibold text-base">No vehicles registered yet</p>
+                        <p className="text-slate-500 text-xs max-w-sm">Click "Add New Vehicle" to register your truck, or click "Quick Add 1 Sample Vehicle" to test with sample data!</p>
+                        <button
+                          onClick={handleQuickAddSample}
+                          className="mt-2 px-4 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          <span>Add Sample Truck (MH-04-JK-9821)</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
-                  vehicles?.map((v: any) => (
+                  vehicles.map((v: any) => (
                     <tr key={v.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-3.5 px-4 font-mono font-bold text-white">{v.reg_no}</td>
                       <td className="py-3.5 px-4 text-slate-300 font-medium">{v.vehicle_type}</td>

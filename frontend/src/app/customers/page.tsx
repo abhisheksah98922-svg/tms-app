@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { Building2, Plus, Receipt, ShieldCheck, X } from "lucide-react";
+import { Building2, Plus, Receipt, ShieldCheck, X, Sparkles } from "lucide-react";
 
 export default function CustomersPage() {
   const queryClient = useQueryClient();
@@ -42,11 +42,25 @@ export default function CustomersPage() {
     },
   });
 
+  const handleQuickAddSample = () => {
+    createCustomerMutation.mutate({
+      name: "Reliance Retail Ltd",
+      phone: "+91 22 6789 0000",
+      email: "logistics@relianceretail.com",
+      gstin: "27AAACR5432A1Z9",
+      state_code: "27",
+      state_name: "Maharashtra",
+      address: "BKC, Bandra East, Mumbai",
+      credit_days: 30,
+      credit_limit: 1000000.0,
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createCustomerMutation.mutate({
       name,
-      gstin,
+      gstin: gstin || "27AAACR5432A1Z9",
       state_code: stateCode,
       state_name: stateName,
       credit_days: 30,
@@ -64,13 +78,22 @@ export default function CustomersPage() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">Customer Directory</h1>
             <p className="text-slate-400 text-sm mt-1">Shipper client profiles, GSTIN tax validation, credit limits, and outstanding balances</p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Customer</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleQuickAddSample}
+              className="flex items-center space-x-2 px-3.5 py-2.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 font-medium rounded-xl text-sm transition-all"
+            >
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span>Quick Add 1 Sample Customer</span>
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Customer</span>
+            </button>
+          </div>
         </div>
 
         {/* Customers Table */}
@@ -92,8 +115,25 @@ export default function CustomersPage() {
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-slate-400">Loading customers...</td>
                   </tr>
+                ) : !customers || customers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <Building2 className="h-10 w-10 text-slate-600" />
+                        <p className="text-slate-300 font-semibold text-base">No commercial customers registered yet</p>
+                        <p className="text-slate-500 text-xs max-w-sm">Click "Add Customer" to add a shipper client, or click "Quick Add 1 Sample Customer" to test!</p>
+                        <button
+                          onClick={handleQuickAddSample}
+                          className="mt-2 px-4 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          <span>Add Sample Customer (Reliance Retail Ltd)</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
-                  customers?.map((c: any) => (
+                  customers.map((c: any) => (
                     <tr key={c.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="py-3.5 px-4 font-bold text-white">{c.name}</td>
                       <td className="py-3.5 px-4 font-mono text-xs text-indigo-400 font-semibold">{c.gstin}</td>

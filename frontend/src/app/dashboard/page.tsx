@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
 import { 
@@ -12,7 +13,11 @@ import {
   ArrowUpRight,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Users,
+  Building2,
+  Sparkles
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -42,6 +47,30 @@ export default function DashboardPage() {
               Live Production State
             </span>
           </div>
+        </div>
+
+        {/* Quick Action Bar */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <Link href="/billing" className="p-3.5 rounded-xl bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 transition-all flex items-center space-x-2 text-indigo-300 text-xs font-bold">
+            <Receipt className="h-4 w-4" />
+            <span>Custom Bill Studio</span>
+          </Link>
+          <Link href="/trips" className="p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition-all flex items-center space-x-2 text-slate-200 text-xs font-bold">
+            <MapPin className="h-4 w-4 text-sky-400" />
+            <span>Dispatch Trip</span>
+          </Link>
+          <Link href="/vehicles" className="p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition-all flex items-center space-x-2 text-slate-200 text-xs font-bold">
+            <Truck className="h-4 w-4 text-emerald-400" />
+            <span>Add Vehicle</span>
+          </Link>
+          <Link href="/drivers" className="p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition-all flex items-center space-x-2 text-slate-200 text-xs font-bold">
+            <Users className="h-4 w-4 text-amber-400" />
+            <span>Add Driver</span>
+          </Link>
+          <Link href="/customers" className="p-3.5 rounded-xl bg-slate-900 hover:bg-slate-800/80 border border-slate-800 transition-all flex items-center space-x-2 text-slate-200 text-xs font-bold">
+            <Building2 className="h-4 w-4 text-violet-400" />
+            <span>Add Customer</span>
+          </Link>
         </div>
 
         {/* Loading / Error States */}
@@ -101,7 +130,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-3xl font-extrabold text-white">{dashboard?.active_vehicles || 0} / 3</h3>
+                  <h3 className="text-3xl font-extrabold text-white">{dashboard?.active_vehicles || 0}</h3>
                   <p className="text-xs text-sky-400 mt-1">Available & In-Transit Vehicles</p>
                 </div>
               </div>
@@ -141,26 +170,38 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {dashboard?.recent_trips?.map((t: any) => (
-                      <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-3.5 px-4 font-mono font-medium text-indigo-400">{t.trip_no}</td>
-                        <td className="py-3.5 px-4 font-medium text-slate-200">{t.origin} → {t.destination}</td>
-                        <td className="py-3.5 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            t.status === "COMPLETED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                            t.status === "IN_TRANSIT" ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
-                            "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          }`}>
-                            {t.status}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-medium text-white">₹{t.freight_rate.toLocaleString("en-IN")}</td>
-                        <td className="py-3.5 px-4 text-right text-slate-400">₹{t.total_expenses.toLocaleString("en-IN")}</td>
-                        <td className={`py-3.5 px-4 text-right font-bold ${t.net_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                          ₹{t.net_profit.toLocaleString("en-IN")}
+                    {!dashboard?.recent_trips || dashboard.recent_trips.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center">
+                          <div className="flex flex-col items-center justify-center space-y-2">
+                            <MapPin className="h-8 w-8 text-slate-600" />
+                            <p className="text-slate-300 font-semibold text-sm">No recent trips dispatched yet</p>
+                            <p className="text-slate-500 text-xs">Use the quick action buttons above to dispatch your first trip or create custom bills!</p>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      dashboard.recent_trips.map((t: any) => (
+                        <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3.5 px-4 font-mono font-medium text-indigo-400">{t.trip_no}</td>
+                          <td className="py-3.5 px-4 font-medium text-slate-200">{t.origin} → {t.destination}</td>
+                          <td className="py-3.5 px-4">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              t.status === "COMPLETED" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                              t.status === "IN_TRANSIT" ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
+                              "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}>
+                              {t.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-medium text-white">₹{t.freight_rate.toLocaleString("en-IN")}</td>
+                          <td className="py-3.5 px-4 text-right text-slate-400">₹{t.total_expenses.toLocaleString("en-IN")}</td>
+                          <td className={`py-3.5 px-4 text-right font-bold ${t.net_profit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                            ₹{t.net_profit.toLocaleString("en-IN")}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

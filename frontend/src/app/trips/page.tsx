@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { MapPin, Plus, TrendingUp, DollarSign, Calculator, CheckCircle, ArrowRight, X, Truck, User, Calendar, Scale } from "lucide-react";
+import { MapPin, Plus, TrendingUp, DollarSign, Calculator, CheckCircle, ArrowRight, X, Truck, User, Calendar, Scale, Sparkles } from "lucide-react";
 
 export default function TripsPage() {
   const queryClient = useQueryClient();
@@ -56,6 +56,16 @@ export default function TripsPage() {
     },
   });
 
+  const { data: customers } = useQuery({
+    queryKey: ["customersList"],
+    queryFn: async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const res = await fetch(`${baseUrl}/api/v1/customers`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
   const { data: trips, isLoading } = useQuery({
     queryKey: ["tripsList"],
     queryFn: async () => {
@@ -99,13 +109,111 @@ export default function TripsPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleQuickAddSampleTrip = async () => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+    
+    // Ensure vehicle exists
+    let vId = vehicles?.[0]?.id;
+    if (!vId) {
+      const vRes = await fetch(`${baseUrl}/api/v1/vehicles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reg_no: "MH-04-JK-9821", vehicle_type: "Container 32ft MX", capacity_tons: 15.0 }),
+      });
+      const vData = await vRes.json();
+      vId = vData.id;
+    }
+
+    // Ensure driver exists
+    let dId = drivers?.[0]?.id;
+    if (!dId) {
+      const dRes = await fetch(`${baseUrl}/api/v1/drivers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Ramesh Kumar", phone: "+91 98765 43210", license_no: "DL-MH-2026", license_expiry: "2027-12-31" }),
+      });
+      const dData = await dRes.json();
+      dId = dData.id;
+    }
+
+    // Ensure customer exists
+    let cId = customers?.[0]?.id;
+    if (!cId) {
+      const cRes = await fetch(`${baseUrl}/api/v1/customers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Reliance Retail Ltd", gstin: "27AAACR5432A1Z9", state_code: "27", state_name: "Maharashtra" }),
+      });
+      const cData = await cRes.json();
+      cId = cData.id;
+    }
+
+    createTripMutation.mutate({
+      trip_no: `TRIP-2026-${Math.floor(100 + Math.random() * 900)}`,
+      vehicle_id: vId,
+      driver_id: dId,
+      customer_id: cId,
+      origin: "Bhiwandi, MH",
+      destination: "Pune, MH",
+      goods_description: "FMCG Retail Cartons",
+      weight_tons: 14.5,
+      start_date: new Date().toISOString().split("T")[0],
+      freight_rate: 45000.0,
+      fuel_cost: 14000.0,
+      toll_cost: 2200.0,
+      police_cost: 500.0,
+      loading_cost: 1500.0,
+      unloading_cost: 1500.0,
+      labour_cost: 1000.0,
+      other_cost: 300.0,
+      driver_salary_alloc: 4000.0,
+      status: "DISPATCHED",
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+    let vId = parseInt(vehicleId) || vehicles?.[0]?.id;
+    let dId = parseInt(driverId) || drivers?.[0]?.id;
+    let cId = parseInt(customerId) || customers?.[0]?.id;
+
+    if (!vId) {
+      const vRes = await fetch(`${baseUrl}/api/v1/vehicles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reg_no: "MH-04-JK-9821", vehicle_type: "Container 32ft MX", capacity_tons: 15.0 }),
+      });
+      const vData = await vRes.json();
+      vId = vData.id;
+    }
+
+    if (!dId) {
+      const dRes = await fetch(`${baseUrl}/api/v1/drivers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Ramesh Kumar", phone: "+91 98765 43210", license_no: "DL-MH-2026", license_expiry: "2027-12-31" }),
+      });
+      const dData = await dRes.json();
+      dId = dData.id;
+    }
+
+    if (!cId) {
+      const cRes = await fetch(`${baseUrl}/api/v1/customers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Reliance Retail Ltd", gstin: "27AAACR5432A1Z9", state_code: "27", state_name: "Maharashtra" }),
+      });
+      const cData = await cRes.json();
+      cId = cData.id;
+    }
+
     createTripMutation.mutate({
       trip_no: tripNo,
-      vehicle_id: parseInt(vehicleId),
-      driver_id: parseInt(driverId),
-      customer_id: parseInt(customerId),
+      vehicle_id: vId,
+      driver_id: dId,
+      customer_id: cId,
       origin,
       destination,
       goods_description: "General Commercial Freight",
@@ -134,21 +242,43 @@ export default function TripsPage() {
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">Trip Dispatch & P&L Tracker</h1>
             <p className="text-slate-400 text-sm mt-1">Live vehicle registration tracking, payload cargo weight (Tons), dispatch loading dates, and net profit ledger</p>
           </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Dispatch New Trip</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleQuickAddSampleTrip}
+              className="flex items-center space-x-2 px-3.5 py-2.5 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 font-medium rounded-xl text-sm transition-all"
+            >
+              <Sparkles className="h-4 w-4 text-emerald-400" />
+              <span>Quick Add 1 Sample Trip</span>
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/25"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Dispatch New Trip</span>
+            </button>
+          </div>
         </div>
 
         {/* Trips List */}
         <div className="space-y-4">
           {isLoading ? (
             <p className="text-center py-8 text-slate-400">Loading trips...</p>
+          ) : !trips || trips.length === 0 ? (
+            <div className="p-12 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
+              <MapPin className="h-10 w-10 text-slate-600 mx-auto" />
+              <p className="text-slate-300 font-semibold text-base">No active trip dispatches recorded yet</p>
+              <p className="text-slate-500 text-xs max-w-sm mx-auto">Click "Dispatch New Trip" to record a route, or click "Quick Add 1 Sample Trip" to generate a demo trip!</p>
+              <button
+                onClick={handleQuickAddSampleTrip}
+                className="mt-2 px-4 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition-all inline-flex items-center space-x-2"
+              >
+                <Sparkles className="h-4 w-4 text-emerald-400" />
+                <span>Dispatch Sample Trip (Bhiwandi → Pune)</span>
+              </button>
+            </div>
           ) : (
-            trips?.map((t: any) => (
+            trips.map((t: any) => (
               <div key={t.id} className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">
@@ -239,7 +369,7 @@ export default function TripsPage() {
           )}
         </div>
 
-        {/* Modal: Create Trip + Vehicle Selection + Weight & Loading Date */}
+        {/* Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
             <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl p-6 rounded-2xl space-y-6 my-8">
@@ -267,34 +397,46 @@ export default function TripsPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-indigo-400 mb-1">Assigned Vehicle Number</label>
-                    <select
-                      value={vehicleId}
-                      onChange={(e) => setVehicleId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono font-bold text-sm focus:border-indigo-500 focus:outline-none"
-                    >
-                      {vehicles?.map((v: any) => (
-                        <option key={v.id} value={v.id}>
-                          {v.reg_no} ({v.vehicle_type})
-                        </option>
-                      ))}
-                    </select>
+                    {vehicles && vehicles.length > 0 ? (
+                      <select
+                        value={vehicleId}
+                        onChange={(e) => setVehicleId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white font-mono font-bold text-sm focus:border-indigo-500 focus:outline-none"
+                      >
+                        {vehicles.map((v: any) => (
+                          <option key={v.id} value={v.id}>
+                            {v.reg_no} ({v.vehicle_type})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
+                        Auto-creating MH-04-JK-9821
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">Assigned Driver</label>
-                    <select
-                      value={driverId}
-                      onChange={(e) => setDriverId(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm"
-                    >
-                      {drivers?.map((d: any) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name} ({d.phone})
-                        </option>
-                      ))}
-                    </select>
+                    {drivers && drivers.length > 0 ? (
+                      <select
+                        value={driverId}
+                        onChange={(e) => setDriverId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm"
+                      >
+                        {drivers.map((d: any) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name} ({d.phone})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold">
+                        Auto-assigning Ramesh Kumar
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-emerald-400 mb-1">Cargo Weight (Tons)</label>
