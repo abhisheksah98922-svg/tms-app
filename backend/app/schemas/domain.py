@@ -9,6 +9,16 @@ class UserLogin(BaseModel):
     password: str
 
 
+class CompanyRegister(BaseModel):
+    company_name: str
+    full_name: str
+    email: EmailStr
+    password: str
+    gstin: Optional[str] = "27AAACA1234A1Z5"
+    state_code: Optional[str] = "27"
+    state_name: Optional[str] = "Maharashtra"
+
+
 class UserOut(BaseModel):
     id: int
     company_id: int

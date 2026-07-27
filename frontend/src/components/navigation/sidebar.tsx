@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -28,6 +28,19 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [userName, setUserName] = useState("Rajesh Sharma");
+  const [companyName, setCompanyName] = useState("Apex Logistics");
+  const [userEmail, setUserEmail] = useState("admin@apexlogistics.in");
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user_name");
+    const storedCompany = localStorage.getItem("company_name");
+    const storedEmail = localStorage.getItem("user_email");
+
+    if (storedUser) setUserName(storedUser);
+    if (storedCompany) setCompanyName(storedCompany);
+    if (storedEmail) setUserEmail(storedEmail);
+  }, []);
 
   return (
     <aside className="w-64 border-r border-slate-800 bg-slate-900/60 p-6 flex flex-col justify-between flex-shrink-0">
@@ -38,8 +51,8 @@ export function Sidebar() {
             <Truck className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white tracking-tight">Apex Logistics</h1>
-            <p className="text-xs text-indigo-400 font-medium">Enterprise TMS</p>
+            <h1 className="font-bold text-sm text-white tracking-tight line-clamp-1">{companyName}</h1>
+            <p className="text-[11px] text-indigo-400 font-semibold uppercase tracking-wider">Enterprise Workspace</p>
           </div>
         </div>
 
@@ -71,19 +84,19 @@ export function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs font-semibold text-white">Rajesh Sharma</span>
+            <span className="text-xs font-semibold text-white truncate max-w-[110px]">{userName}</span>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold">
             ADMIN
           </span>
         </div>
-        <p className="text-[11px] text-slate-400">admin@apexlogistics.in</p>
+        <p className="text-[11px] text-slate-400 truncate">{userEmail}</p>
         <Link
           href="/login"
           className="flex items-center justify-center space-x-2 w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
         >
           <LogOut className="h-3.5 w-3.5" />
-          <span>Switch User / Logout</span>
+          <span>Switch Account / Logout</span>
         </Link>
       </div>
     </aside>
