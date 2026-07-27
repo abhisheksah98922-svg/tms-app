@@ -1,0 +1,18 @@
+[project]
+name = "tms-backend"
+version = "0.1.0"
+description = "FastAPI Backend for Enterprise Transport Management System"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
