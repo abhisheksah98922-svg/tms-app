@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from passlib.context import CryptContext
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from jose import jwt
 
 from app.core.db import get_db
 from app.core.config import settings
-from app.models.domain import User, Company, Branch, Vehicle, Driver, Customer, VehicleStatus, DriverStatus
+from app.models.domain import User, Company, Branch
 from app.schemas.domain import UserLogin, CompanyRegister, TokenResponse, UserOut
 
 router = APIRouter()
@@ -35,7 +35,7 @@ async def register_company(payload: CompanyRegister, db: AsyncSession = Depends(
             detail="Account with this email already exists"
         )
 
-    # 1. Create New Company
+    # 1. Create New Company with 0 dummy data
     company = Company(
         name=payload.company_name,
         state_code=payload.state_code or "27",
@@ -67,41 +67,6 @@ async def register_company(payload: CompanyRegister, db: AsyncSession = Depends(
         is_active=True
     )
     db.add(user)
-    await db.flush()
-
-    # 4. Populate starter vehicles/drivers for new company
-    v1 = Vehicle(
-        company_id=company.id,
-        reg_no=f"MH-{company.id:02d}-AB-1001",
-        vehicle_type="16 Ton Truck",
-        capacity_tons=16.0,
-        status=VehicleStatus.AVAILABLE.value,
-        fitness_expiry=date(2027, 12, 31),
-        insurance_expiry=date(2027, 10, 15)
-    )
-    d1 = Driver(
-        company_id=company.id,
-        name=payload.full_name,
-        phone="+91 98000 00000",
-        license_no=f"DL-{company.id:04d}-2026",
-        license_expiry=date(2028, 1, 1),
-        salary_monthly=30000.0,
-        status=DriverStatus.AVAILABLE.value
-    )
-    c1 = Customer(
-        company_id=company.id,
-        name="Primary Commercial Shipper",
-        phone="+91 22 1234 5678",
-        email="billing@shipper.com",
-        gstin="27AAACR1234A1Z1",
-        state_code="27",
-        state_name="Maharashtra",
-        address="Industrial Area",
-        credit_days=30,
-        credit_limit=500000.0
-    )
-    db.add_all([v1, d1, c1])
-
     await db.commit()
     await db.refresh(user)
 
