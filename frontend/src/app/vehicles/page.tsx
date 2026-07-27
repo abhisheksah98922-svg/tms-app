@@ -1,16 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/navigation/sidebar";
-import { Truck, Plus, ShieldAlert, Calendar, CheckCircle2, X, Sparkles } from "lucide-react";
+import { ContextMenu, ContextMenuItem } from "@/components/navigation/context-menu";
+import { Truck, Plus, ShieldAlert, Calendar, CheckCircle2, X, Sparkles, MapPin, Wrench } from "lucide-react";
 
 export default function VehiclesPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [regNo, setRegNo] = useState("");
   const [vehicleType, setVehicleType] = useState("Container 32ft MX");
   const [capacityTons, setCapacityTons] = useState("15.0");
+
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; vehicle: any } | null>(null);
 
   const { data: vehicles, isLoading } = useQuery({
     queryKey: ["vehiclesList"],
@@ -51,6 +57,11 @@ export default function VehiclesPage() {
     });
   };
 
+  const handleContextMenu = (e: React.MouseEvent, vehicle: any) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, vehicle });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createVehicleMutation.mutate({
@@ -63,15 +74,50 @@ export default function VehiclesPage() {
     });
   };
 
+  const getContextMenuItems = (): ContextMenuItem[] => {
+    const v = contextMenu?.vehicle;
+    return [
+      {
+        label: v ? `Dispatch Trip (${v.reg_no})` : "Dispatch New Trip",
+        icon: MapPin,
+        color: "text-indigo-400 hover:text-indigo-300",
+        action: () => router.push("/trips"),
+      },
+      {
+        label: "Create Custom Transport Bill",
+        icon: Truck,
+        color: "text-emerald-400 hover:text-emerald-300",
+        action: () => router.push("/billing"),
+      },
+      {
+        label: "Register New Vehicle",
+        icon: Plus,
+        divider: true,
+        action: () => setIsModalOpen(true),
+      },
+      {
+        label: "Quick Add Sample Truck",
+        icon: Sparkles,
+        color: "text-amber-400 hover:text-amber-300",
+        action: handleQuickAddSample,
+      },
+    ];
+  };
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div
+      onContextMenu={(e) => {
+        if (!contextMenu) handleContextMenu(e, null);
+      }}
+      className="flex min-h-screen bg-slate-950 text-slate-100"
+    >
       <Sidebar />
 
       <main className="flex-1 p-6 md:p-10 space-y-8 overflow-y-auto">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-white">Fleet Vehicle Roster</h1>
-            <p className="text-slate-400 text-sm mt-1">Vehicle status tracking, payload capacities, and document compliance</p>
+            <p className="text-slate-400 text-sm mt-1">Vehicle status tracking, payload capacities, and right-click context menu options</p>
           </div>
           <div className="flex items-center space-x-3">
             <button
@@ -116,7 +162,7 @@ export default function VehiclesPage() {
                       <div className="flex flex-col items-center justify-center space-y-3">
                         <Truck className="h-10 w-10 text-slate-600" />
                         <p className="text-slate-300 font-semibold text-base">No vehicles registered yet</p>
-                        <p className="text-slate-500 text-xs max-w-sm">Click "Add New Vehicle" to register your truck, or click "Quick Add 1 Sample Vehicle" to test with sample data!</p>
+                        <p className="text-slate-500 text-xs max-w-sm">Right-click anywhere or click "Add New Vehicle" to register your truck!</p>
                         <button
                           onClick={handleQuickAddSample}
                           className="mt-2 px-4 py-2 bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition-all flex items-center space-x-2"
@@ -129,7 +175,11 @@ export default function VehiclesPage() {
                   </tr>
                 ) : (
                   vehicles.map((v: any) => (
-                    <tr key={v.id} className="hover:bg-slate-800/30 transition-colors">
+                    <tr
+                      key={v.id}
+                      onContextMenu={(e) => handleContextMenu(e, v)}
+                      className="hover:bg-slate-800/40 transition-colors cursor-context-menu"
+                    >
                       <td className="py-3.5 px-4 font-mono font-bold text-white">{v.reg_no}</td>
                       <td className="py-3.5 px-4 text-slate-300 font-medium">{v.vehicle_type}</td>
                       <td className="py-3.5 px-4 text-slate-300">{v.capacity_tons} Tons</td>
@@ -219,6 +269,16 @@ export default function VehiclesPage() {
               </form>
             </div>
           </div>
+        )}
+
+        {/* Custom Context Menu */}
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            items={getContextMenuItems()}
+            onClose={() => setContextMenu(null)}
+          />
         )}
       </main>
     </div>

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/navigation/sidebar";
+import { ContextMenu, ContextMenuItem } from "@/components/navigation/context-menu";
 import { numberToWordsIndian } from "@/lib/numberToWords";
 import { 
   Receipt, 
@@ -34,6 +35,9 @@ export default function UltraStunningBillingPage() {
   // Mode & Color Palette
   const [renderMode, setRenderMode] = useState<"physical" | "modern">("physical");
   const [accentColor, setAccentColor] = useState<"slate" | "navy" | "emerald" | "violet">("slate");
+
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // 100% Fully Customizable Upper Header Section Controls
   const [invocationText, setInvocationText] = useState("|| श्री गणेशाय नम: ||");
@@ -233,8 +237,7 @@ export default function UltraStunningBillingPage() {
     },
   });
 
-  const handleSaveInvoice = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveInvoice = () => {
     const formattedTrips = workEntries.map((row) => ({
       dispatch_time_date: row.date_of_work,
       vehicle_reg_no: row.truck_no,
@@ -257,8 +260,54 @@ export default function UltraStunningBillingPage() {
     });
   };
 
+  const getContextMenuItems = (): ContextMenuItem[] => {
+    return [
+      {
+        label: "Print Bill Slip",
+        icon: Printer,
+        color: "text-emerald-400 hover:text-emerald-300",
+        action: () => window.print(),
+      },
+      {
+        label: "Add Vehicle Trip Row",
+        icon: Plus,
+        color: "text-indigo-400 hover:text-indigo-300",
+        action: addRow,
+      },
+      {
+        label: "Save Bill to Ledger",
+        icon: Save,
+        color: "text-sky-400 hover:text-sky-300",
+        action: handleSaveInvoice,
+      },
+      {
+        label: "Preset: Binod Kumar Mandal",
+        icon: Sparkles,
+        divider: true,
+        action: applyPresetBinodMandal,
+      },
+      {
+        label: "Preset: Apex Logistics",
+        icon: Sparkles,
+        action: applyPresetApexLogistics,
+      },
+      {
+        label: renderMode === "physical" ? "Switch to Corporate Fleet Mode" : "Switch to Physical Slip Mode",
+        icon: Zap,
+        color: "text-amber-400 hover:text-amber-300",
+        action: () => setRenderMode(renderMode === "physical" ? "modern" : "physical"),
+      },
+    ];
+  };
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      }}
+      className="flex min-h-screen bg-slate-950 text-slate-100"
+    >
       <div className="print:hidden">
         <Sidebar />
       </div>
@@ -277,7 +326,7 @@ export default function UltraStunningBillingPage() {
               <FileText className="h-7 w-7 text-indigo-400" />
               <span>State-of-the-Art Transport Invoice Studio</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Dual-mode billing generator with physical paper slip mode & ultra-modern glassmorphic fleet invoice mode</p>
+            <p className="text-slate-400 text-sm mt-1">Dual-mode billing generator with right-click menu & physical paper slip mode</p>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -798,67 +847,47 @@ export default function UltraStunningBillingPage() {
                       <p className="text-sm font-extrabold text-white mt-1">{clientName}</p>
                       <p className="text-xs text-slate-400">{clientAddress}</p>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Logistics Payload:</span>
-                      <p className="text-sm font-extrabold text-sky-400 font-mono mt-1">{totalTons} Tons Payload</p>
-                      <p className="text-xs text-slate-400 font-mono">({totalKgs.toLocaleString()} KGS across {workEntries.length} trips)</p>
+                    <div className="text-right font-mono">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">E-Way Bill / Ref:</span>
+                      <p className="text-xs text-emerald-400 font-bold mt-1">{ewayBillNo}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">HSN/SAC: 996511</p>
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead className="bg-slate-900 text-slate-400 font-semibold uppercase text-[10px] border-b border-slate-800">
-                        <tr>
-                          <th className="py-2 px-3">Date</th>
-                          <th className="py-2 px-3">Truck Reg</th>
-                          <th className="py-2 px-3">Route Description</th>
-                          <th className="py-2 px-3 text-right">Weight (KGS)</th>
-                          <th className="py-2 px-3 text-right">Rate / Ton</th>
-                          <th className="py-2 px-3 text-right">Kata Chg</th>
-                          <th className="py-2 px-3 text-right">Subtotal</th>
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-900 text-slate-400 font-bold uppercase text-[10px] border-b border-slate-800">
+                      <tr>
+                        <th className="py-2 px-3">Work Date</th>
+                        <th className="py-2 px-3">Truck Reg No.</th>
+                        <th className="py-2 px-3">Route Description</th>
+                        <th className="py-2 px-3 text-right">Payload (KGS)</th>
+                        <th className="py-2 px-3 text-right">Rate / Ton</th>
+                        <th className="py-2 px-3 text-right">Amount (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80 font-mono">
+                      {workEntries.map((row) => (
+                        <tr key={row.id}>
+                          <td className="py-2.5 px-3 font-semibold text-slate-300">{row.date_of_work}</td>
+                          <td className="py-2.5 px-3 font-bold text-indigo-400">{row.truck_no}</td>
+                          <td className="py-2.5 px-3 font-sans text-white">{row.description}</td>
+                          <td className="py-2.5 px-3 text-right text-slate-300">{row.weight_kgs.toLocaleString("en-IN")}</td>
+                          <td className="py-2.5 px-3 text-right text-slate-300">{row.rate_per_ton}</td>
+                          <td className="py-2.5 px-3 text-right font-extrabold text-white">₹{row.amount.toLocaleString("en-IN")}</td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-800 font-mono">
-                        {workEntries.map((row) => (
-                          <tr key={row.id} className="hover:bg-slate-900/50">
-                            <td className="py-2 px-3 text-slate-300">{row.date_of_work}</td>
-                            <td className="py-2 px-3 font-bold text-emerald-400">{row.truck_no}</td>
-                            <td className="py-2 px-3 font-sans text-slate-200">{row.description}</td>
-                            <td className="py-2 px-3 text-right text-slate-300">{row.weight_kgs.toLocaleString("en-IN")}</td>
-                            <td className="py-2 px-3 text-right text-slate-300">{row.rate_per_ton}</td>
-                            <td className="py-2 px-3 text-right text-slate-400">{row.wt_charge > 0 ? `₹${row.wt_charge}` : "-"}</td>
-                            <td className="py-2 px-3 text-right font-extrabold text-white">₹{row.amount.toLocaleString("en-IN")}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex justify-between items-center font-mono">
+                    <span className="text-xs font-bold text-slate-400 uppercase">Gross Payable Total</span>
+                    <span className="text-2xl font-extrabold text-emerald-400">₹{netTotal.toLocaleString("en-IN")}</span>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between font-mono">
-                    <span className="text-slate-400 font-sans text-xs">Amount in Words: <strong className="text-white italic underline">{totalInWords}</strong></span>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 block font-sans">Net Receivable Total</span>
-                      <span className="text-xl font-extrabold text-indigo-400">₹{netTotal.toLocaleString("en-IN")}</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1 font-mono text-[11px]">
-                      <span className="font-bold text-indigo-400 font-sans block text-xs">Bank Transfer Details</span>
-                      <p className="text-slate-300">Bank: <strong className="text-white">{bankName}</strong> ({branchName})</p>
-                      <p className="text-slate-300">A/c No: <strong className="text-white">{accountNo}</strong></p>
-                      <p className="text-slate-300">IFSC: <strong className="text-white">{ifscCode}</strong></p>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-emerald-400 block">UPI Instant Payment</span>
-                        <span className="text-[11px] font-mono text-slate-400 block">{upiId}</span>
-                        <span className="text-[10px] text-slate-500 block mt-1">Scan QR Code to pay</span>
-                      </div>
-                      <div className="p-2 bg-white rounded-lg">
-                        <QrCode className="h-10 w-10 text-slate-950" />
-                      </div>
+                  <div className="p-3 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-indigo-400 font-bold block uppercase">Total in Words</span>
+                      <span className="font-semibold text-white italic">{totalInWords}</span>
                     </div>
                   </div>
                 </div>
@@ -866,6 +895,16 @@ export default function UltraStunningBillingPage() {
             </div>
           </div>
         </div>
+
+        {/* Custom Right-Click Context Menu */}
+        {contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            items={getContextMenuItems()}
+            onClose={() => setContextMenu(null)}
+          />
+        )}
       </main>
     </div>
   );
