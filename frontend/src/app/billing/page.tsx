@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/navigation/sidebar";
 import { ContextMenu, ContextMenuItem } from "@/components/navigation/context-menu";
 import { numberToWordsIndian } from "@/lib/numberToWords";
+import { estimateRouteProfitability } from "@/lib/aiRouteEstimator";
 import { 
   Receipt, 
   Calculator, 
@@ -25,15 +26,19 @@ import {
   Palette, 
   Zap, 
   Copy, 
-  ExternalLink 
+  ExternalLink,
+  Share2,
+  Globe,
+  Compass
 } from "lucide-react";
 
 export default function UltraStunningBillingPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Mode & Color Palette
+  // Mode, Language & Color Palette
   const [renderMode, setRenderMode] = useState<"physical" | "modern">("physical");
+  const [billLanguage, setBillLanguage] = useState<"EN" | "HI">("EN");
   const [accentColor, setAccentColor] = useState<"slate" | "navy" | "emerald" | "violet">("slate");
 
   // Context Menu State
@@ -218,6 +223,31 @@ export default function UltraStunningBillingPage() {
 
   const totalInWords = numberToWordsIndian(netTotal);
 
+  // AI Profitability Estimation
+  const aiEstimation = estimateRouteProfitability("Mumbai", "Pune", parseFloat(totalTons) || 12, grossTotal);
+
+  // WhatsApp Share Handler
+  const handleShareWhatsApp = () => {
+    const message = `🚛 *${contractorName.toUpperCase()} TRANSPORT BILL*
+----------------------------------------
+*Bill No:* #${billNo}
+*Bill Date:* ${billDate}
+*Customer:* ${clientName}
+*Vehicles / Trips:* ${workEntries.length} Items (${totalTons} Tons Payload)
+
+*Total Payable Amount:* ₹${netTotal.toLocaleString("en-IN")}
+----------------------------------------
+*Bank Name:* ${bankName}
+*Account No:* ${accountNo}
+*IFSC Code:* ${ifscCode}
+*UPI VPA:* ${upiId}
+----------------------------------------
+_Generated via Enterprise Transport Management System_`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+  };
+
   // Save Mutation
   const saveCustomInvoiceMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -263,39 +293,38 @@ export default function UltraStunningBillingPage() {
   const getContextMenuItems = (): ContextMenuItem[] => {
     return [
       {
+        label: "Share Bill on WhatsApp",
+        icon: Share2,
+        color: "text-emerald-400 hover:text-emerald-300",
+        action: handleShareWhatsApp,
+      },
+      {
         label: "Print Bill Slip",
         icon: Printer,
-        color: "text-emerald-400 hover:text-emerald-300",
+        color: "text-indigo-400 hover:text-indigo-300",
         action: () => window.print(),
       },
       {
         label: "Add Vehicle Trip Row",
         icon: Plus,
-        color: "text-indigo-400 hover:text-indigo-300",
+        color: "text-sky-400 hover:text-sky-300",
         action: addRow,
       },
       {
         label: "Save Bill to Ledger",
         icon: Save,
-        color: "text-sky-400 hover:text-sky-300",
+        divider: true,
         action: handleSaveInvoice,
       },
       {
         label: "Preset: Binod Kumar Mandal",
         icon: Sparkles,
-        divider: true,
         action: applyPresetBinodMandal,
       },
       {
         label: "Preset: Apex Logistics",
         icon: Sparkles,
         action: applyPresetApexLogistics,
-      },
-      {
-        label: renderMode === "physical" ? "Switch to Corporate Fleet Mode" : "Switch to Physical Slip Mode",
-        icon: Zap,
-        color: "text-amber-400 hover:text-amber-300",
-        action: () => setRenderMode(renderMode === "physical" ? "modern" : "physical"),
       },
     ];
   };
@@ -326,10 +355,17 @@ export default function UltraStunningBillingPage() {
               <FileText className="h-7 w-7 text-indigo-400" />
               <span>State-of-the-Art Transport Invoice Studio</span>
             </h1>
-            <p className="text-slate-400 text-sm mt-1">Dual-mode billing generator with right-click menu & physical paper slip mode</p>
+            <p className="text-slate-400 text-sm mt-1">WhatsApp sharing, AI route estimation, right-click menu & Hindi/English slip mode</p>
           </div>
 
           <div className="flex items-center space-x-3">
+            <button
+              onClick={handleShareWhatsApp}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-sm font-semibold transition-all shadow-md"
+            >
+              <Share2 className="h-4 w-4 text-emerald-400" />
+              <span>WhatsApp Share</span>
+            </button>
             <button
               onClick={() => window.print()}
               className="flex items-center space-x-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-sm font-semibold transition-all shadow-md"
@@ -348,9 +384,9 @@ export default function UltraStunningBillingPage() {
           </div>
         </div>
 
-        {/* Dual Mode Switcher & Palette Selector Bar */}
+        {/* Dual Mode Switcher, Language & AI Estimator Bar */}
         <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 print:hidden">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <Zap className="h-4 w-4 text-amber-400" />
             <span className="text-xs font-bold text-slate-300">Bill Rendering Mode:</span>
             <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
@@ -379,14 +415,52 @@ export default function UltraStunningBillingPage() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Palette className="h-4 w-4 text-indigo-400" />
-            <span className="text-xs font-bold text-slate-300">Color Accent:</span>
-            <div className="flex space-x-1.5">
-              <button onClick={() => setAccentColor("slate")} className={`w-6 h-6 rounded-full bg-slate-700 border-2 ${accentColor === "slate" ? "border-white scale-110" : "border-transparent"}`} />
-              <button onClick={() => setAccentColor("navy")} className={`w-6 h-6 rounded-full bg-sky-600 border-2 ${accentColor === "navy" ? "border-white scale-110" : "border-transparent"}`} />
-              <button onClick={() => setAccentColor("emerald")} className={`w-6 h-6 rounded-full bg-emerald-600 border-2 ${accentColor === "emerald" ? "border-white scale-110" : "border-transparent"}`} />
-              <button onClick={() => setAccentColor("violet")} className={`w-6 h-6 rounded-full bg-violet-600 border-2 ${accentColor === "violet" ? "border-white scale-110" : "border-transparent"}`} />
+          <div className="flex items-center space-x-3">
+            <Globe className="h-4 w-4 text-sky-400" />
+            <span className="text-xs font-bold text-slate-300">Paper Language:</span>
+            <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setBillLanguage("EN")}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  billLanguage === "EN" ? "bg-sky-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillLanguage("HI")}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  billLanguage === "HI" ? "bg-sky-600 text-white shadow-md" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                हिंदी (Hindi)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Route Profitability Widget (Hidden on Print) */}
+        <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-800/40 flex flex-col md:flex-row items-center justify-between gap-4 text-xs print:hidden">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+              <Compass className="h-5 w-5" />
+            </div>
+            <div>
+              <span className="font-extrabold text-indigo-300 text-sm block">AI Route Profit & Fuel Calculator</span>
+              <span className="text-slate-400">Est. Distance: <strong className="text-white font-mono">{aiEstimation.distance_km} KM</strong> • Est. Diesel: <strong className="text-white font-mono">{aiEstimation.estimated_fuel_liters} Liters (₹{aiEstimation.estimated_fuel_cost.toLocaleString()})</strong></span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4 font-mono text-right">
+            <div>
+              <span className="text-slate-400 block text-[10px]">EST. TOLL COST</span>
+              <span className="text-amber-400 font-bold text-sm">₹{aiEstimation.estimated_toll_cost.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 block text-[10px]">EST. NET PROFIT</span>
+              <span className="text-emerald-400 font-extrabold text-base">₹{aiEstimation.estimated_net_profit.toLocaleString()} ({aiEstimation.profit_margin_percent}%)</span>
             </div>
           </div>
         </div>
@@ -706,7 +780,9 @@ export default function UltraStunningBillingPage() {
                       </div>
                       <div className="text-center flex-1 px-2">
                         <h2 className="text-xl font-extrabold tracking-tight text-slate-950 uppercase">{contractorName}</h2>
-                        <p className="text-[11px] font-bold text-slate-800 tracking-wide uppercase">{tagline}</p>
+                        <p className="text-[11px] font-bold text-slate-800 tracking-wide uppercase">
+                          {billLanguage === "HI" ? "गाड़ी मालिक एवं ट्रांसपोर्ट कांट्रेक्टर" : tagline}
+                        </p>
                         <p className="text-[10px] text-slate-700 mt-0.5">{contractorAddress}</p>
                       </div>
                       <div className="text-right text-[10px] font-mono font-bold">
@@ -719,21 +795,21 @@ export default function UltraStunningBillingPage() {
                   <div className="border-2 border-slate-900 grid grid-cols-12 text-xs divide-x-2 divide-slate-900 bg-white">
                     <div className="col-span-8 p-2.5 space-y-1">
                       <div className="flex items-center">
-                        <span className="font-bold w-20">Name :</span>
+                        <span className="font-bold w-20">{billLanguage === "HI" ? "नाम :" : "Name :"}</span>
                         <span className="font-extrabold uppercase border-b border-slate-400 flex-1">{clientName}</span>
                       </div>
                       <div className="flex items-center">
-                        <span className="font-bold w-20">Address :</span>
+                        <span className="font-bold w-20">{billLanguage === "HI" ? "पता :" : "Address :"}</span>
                         <span className="uppercase border-b border-slate-400 flex-1">{clientAddress}</span>
                       </div>
                     </div>
                     <div className="col-span-4 p-2.5 space-y-2 font-mono">
                       <div className="flex items-center justify-between">
-                        <span className="font-bold">Bill No. :</span>
+                        <span className="font-bold">{billLanguage === "HI" ? "बिल नं :" : "Bill No. :"}</span>
                         <span className="font-extrabold text-rose-700 text-base">{billNo}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="font-bold">Date :</span>
+                        <span className="font-bold">{billLanguage === "HI" ? "दिनांक :" : "Date :"}</span>
                         <span className="font-bold">{billDate}</span>
                       </div>
                     </div>
@@ -744,13 +820,13 @@ export default function UltraStunningBillingPage() {
                     <table className="w-full text-left border-collapse text-[11px]">
                       <thead className="bg-slate-100 border-b-2 border-slate-900 font-bold uppercase text-[10px] text-center divide-x-2 divide-slate-900">
                         <tr>
-                          <th className="py-2 px-1 w-[12%]">Date of Work</th>
-                          <th className="py-2 px-1 w-[18%]">Truck No.</th>
-                          <th className="py-2 px-2 text-left">DESCRIPTION</th>
-                          <th className="py-2 px-1 w-[14%]">WEIGHT KGS.</th>
-                          <th className="py-2 px-1 w-[12%]">RATE M/T</th>
-                          <th className="py-2 px-1 w-[10%]">WT. CH.</th>
-                          <th className="py-2 px-2 text-right w-[16%]">Amount Rs.</th>
+                          <th className="py-2 px-1 w-[12%]">{billLanguage === "HI" ? "दिनांक" : "Date of Work"}</th>
+                          <th className="py-2 px-1 w-[18%]">{billLanguage === "HI" ? "ट्रक नंबर" : "Truck No."}</th>
+                          <th className="py-2 px-2 text-left">{billLanguage === "HI" ? "विवरण (रूट)" : "DESCRIPTION"}</th>
+                          <th className="py-2 px-1 w-[14%]">{billLanguage === "HI" ? "वजन (किलो)" : "WEIGHT KGS."}</th>
+                          <th className="py-2 px-1 w-[12%]">{billLanguage === "HI" ? "दर प्रति टन" : "RATE M/T"}</th>
+                          <th className="py-2 px-1 w-[10%]">{billLanguage === "HI" ? "कांटा चार्ज" : "WT. CH."}</th>
+                          <th className="py-2 px-2 text-right w-[16%]">{billLanguage === "HI" ? "कुल राशि (रुपये)" : "Amount Rs."}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-300 font-mono divide-x-2 divide-slate-900">
@@ -776,7 +852,7 @@ export default function UltraStunningBillingPage() {
 
                     <div className="border-t-2 border-slate-900 grid grid-cols-12 divide-x-2 divide-slate-900 font-mono bg-slate-100 font-bold text-xs">
                       <div className="col-span-8 p-2 text-right uppercase font-sans">
-                        TOTAL AMOUNT :
+                        {billLanguage === "HI" ? "कुल देय राशि :" : "TOTAL AMOUNT :"}
                       </div>
                       <div className="col-span-4 p-2 text-right font-extrabold text-base text-slate-950">
                         ₹{netTotal.toLocaleString("en-IN")}
@@ -785,7 +861,7 @@ export default function UltraStunningBillingPage() {
                   </div>
 
                   <div className="border-2 border-slate-900 p-2.5 text-xs bg-slate-50 flex items-start space-x-2">
-                    <span className="font-bold whitespace-nowrap">Rupees :</span>
+                    <span className="font-bold whitespace-nowrap">{billLanguage === "HI" ? "शब्दों में (रुपये) :" : "Rupees :"}</span>
                     <span className="font-bold italic underline text-slate-950 flex-1">{totalInWords}</span>
                   </div>
 
