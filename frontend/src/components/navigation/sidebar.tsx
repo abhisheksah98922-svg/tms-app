@@ -11,12 +11,14 @@ import {
   MapPin, 
   Receipt, 
   ShieldCheck, 
-  LogOut 
+  LogOut,
+  Play
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Custom Billing Builder", href: "/billing", icon: Receipt },
+  { name: "Commercial Video Ad", href: "/video-ad", icon: Play },
   { name: "GST Invoices & Billing", href: "/invoices", icon: Receipt },
   { name: "Fleet Vehicles", href: "/vehicles", icon: Truck },
   { name: "Drivers & Wallets", href: "/drivers", icon: Users },
